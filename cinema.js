@@ -31,8 +31,10 @@
     iframe.referrerPolicy = 'strict-origin-when-cross-origin';
     iframe.src = trailerURL(item.trailer);
     iframe.addEventListener('load', () => { if (active === token && layer.isConnected) layer.classList.add('playing'); });
+    iframe.addEventListener('error', () => { layer.classList.remove('playing'); });
     layer.classList.add('cinema-animated');
     layer.append(iframe);
+    // Some browsers never dispatch a usable iframe load event; keep the still visible until it does.
     return layer;
   };
   const close = () => {
