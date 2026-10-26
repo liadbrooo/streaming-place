@@ -36,6 +36,7 @@
         ${item.provider !== 'Anbieter finden' ? `<span class="poster-provider ${pClass}">${esc(item.provider)}</span>` : ''}
         <div class="poster-bottom-shade"></div>
         <div class="poster-hover"><span class="card-play">${icon('play')}</span><span>Details ansehen</span></div>
+        ${item.trailer ? `<button type="button" class="sp-card-trailer" data-trailer="${esc(item.id)}" aria-label="Trailer von ${esc(item.title)} abspielen">${icon('play')} Trailer</button>` : ''}
         <button class="card-save ${saved ? 'saved' : ''}" data-save="${esc(item.id)}" title="${saved ? 'Aus Liste entfernen' : 'Zur Liste hinzufügen'}" aria-label="${saved ? 'Aus Liste entfernen' : 'Zur Liste hinzufügen'}">${icon(saved ? 'check' : 'plus')}</button>
       </div>
       <h4 title="${esc(item.title)}">${esc(item.title)}</h4>
@@ -66,7 +67,7 @@
     $('#viewHeading').innerHTML = `<div><div class="section-kicker"><span class="small-red-square"></span> ${kicker}</div><h2>${titleHtml}</h2><p>${description}</p></div>${showAllButton ? `<button class="text-link" data-view="all">Alle Titel entdecken ${icon('arrow')}</button>` : ''}`;
   };
   const ids = {
-    picks: ['sintel-preview','preview-demo','wednesday','fallout','last-of-us','dune-2','severance','mandalorian','the-boys','oppenheimer','reacher','silo'],
+    picks: ['wednesday','fallout','last-of-us','dune-2','severance','mandalorian','the-boys','oppenheimer','reacher','silo'],
     trending: ['stranger-things','the-boys','house-dragon','squid-game','fallout','the-bear','severance','wednesday','last-of-us','reacher'],
     movies: ['dune-2','oppenheimer','interstellar','batman','spiderverse','top-gun','barbie','avatar','dark-knight','poor-things'],
     worlds: ['mandalorian','andor','loki','house-dragon','wheel-time','halo','silo','interstellar','avatar','dune-2'],
@@ -79,7 +80,6 @@
     if (state.provider !== 'all') { renderProviderSelection(); return; }
     setHead('CURATED FOR YOU', 'Was schaust du <em>heute?</em>', 'Die besten Geschichten. Überall zu Hause.', true);
     $('#contentSections').innerHTML = [
-      row('Diese Video-Vorschauen laufen wirklich', 'Offene Filmtrailer mit echtem HTML5-Video', ['sintel-preview','preview-demo']),
       row('Handverlesen für dich', 'Geschichten, die du nicht verpassen solltest', ids.picks),
       row('Gerade überall im Gespräch', 'Die beliebtesten Stories in unserem Showcase', ids.trending, true),
       editorialBanner(),
@@ -156,8 +156,8 @@
     $('#heroProgress').innerHTML = HERO.map((x,index)=>`<button class="${state.heroIndex===index?'active':''}" data-slide="${index}" title="${esc(x.title)}" aria-label="${esc(x.title)} anzeigen"></button>`).join('');
     updateHeroSave();
     $('#heroTotal').textContent = String(HERO.length).padStart(2,'0');
-    $('#heroPreviewPlay').hidden = !item.previewVideo;
-    $('#heroTrailer').innerHTML = icon('play')+' '+(item.previewVideo ? 'Trailer abspielen' : item.trailer ? 'Offizieller Trailer' : 'Trailer suchen');
+    $('#heroPreviewPlay').hidden = true;
+    $('#heroTrailer').innerHTML = icon('play')+' '+(item.trailer ? 'Trailer abspielen' : 'Trailer suchen');
     window.StreamingPlaceCinema?.hero(item);
   }
   function updateHeroSave() {
@@ -213,7 +213,7 @@
     document.querySelector('.player-bottom > span').textContent = 'OFFIZIELLER TRAILER · YOUTUBE';
     $('#playerYouTube').innerHTML = 'Auf YouTube öffnen ' + icon('external');
     $('#playerFrame').innerHTML = item.trailer
-      ? `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(item.trailer)}?autoplay=1&rel=0&modestbranding=1" title="${esc(item.title)} – offizieller Trailer" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`
+      ? `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(item.trailer)}?autoplay=1&mute=0&playsinline=1&controls=1&rel=0" title="${esc(item.title)} – offizieller Trailer" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`
       : `<div class="player-fallback">${icon('play')}<p>Für diesen Titel führt dich die Trailer-Suche zu YouTube. Vollständige Folgen und Filme findest du beim jeweiligen Streaming-Anbieter.</p><a class="button button-primary" href="${esc(searchUrl)}" target="_blank" rel="noopener noreferrer">Trailer auf YouTube finden ${icon('external')}</a></div>`;
     $('#trailerDialog').showModal();
     clearInterval(state.heroTimer);
@@ -236,6 +236,8 @@
   function activateTarget(event) {
     const save = event.target.closest('[data-save], [data-detail-save]');
     if (save) { event.preventDefault(); event.stopPropagation(); toggleSaved(save.dataset.save || save.dataset.detailSave); return; }
+    const trailerFirst = event.target.closest('[data-trailer]');
+    if (trailerFirst) { event.preventDefault(); event.stopPropagation(); openTrailer(trailerFirst.dataset.trailer); return; }
     const open = event.target.closest('[data-open]');
     if (open) { event.preventDefault(); if ($('#searchDialog').open) closeSearch(); showDetail(open.dataset.open); return; }
     const cinemaPlay = event.target.closest('[data-cinema-play]');

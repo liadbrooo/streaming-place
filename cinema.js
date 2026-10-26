@@ -1,91 +1,156 @@
-/* Native cinematic previews – only directly playable, licensed MP4 video. */
+/* Streaming Place v1.4 – cinematic trailers via official YouTube embeds.
+ * No copyrighted videos are downloaded, proxied or rehosted.
+ * Third-party embed and autoplay restrictions are controlled by YouTube/browser.
+ */
 (() => {
-'use strict';
-let current=null, hoverTimer=null;
-function stop(){
- clearTimeout(hoverTimer);
- if(!current)return;
- const {video,layer}=current;
- if(video){video.pause();video.removeAttribute('src');video.load()}
- layer.remove();current=null;
-}
-const urls=item=>[item.previewVideo,item.previewBackup].filter(Boolean);
-function bind(video,item,layer,status){
- const options=urls(item);let index=0,started=false,watchdog;
- const report=(msg)=>{if(status)status.textContent=msg;layer.classList.add('sp-cinema-motion')};
- const retry=()=>{
-  clearTimeout(watchdog);
-  if(!layer.isConnected)return;
-  if(index+1<options.length){
-   video.src=options[++index];video.load();video.play().catch(()=>report('Bitte Play drücken'));
-  }else report('Video nicht erreichbar – Trailer-Link verwenden');
- };
- video.addEventListener('playing',()=>{started=true;clearTimeout(watchdog);layer.classList.add('sp-cinema-playing');layer.classList.remove('sp-cinema-motion')});
- video.addEventListener('error',retry);
- video.src=options[0];video.load();
- watchdog=setTimeout(()=>{if(!started && video.readyState<2)retry()},8500);
- video.play().catch(()=>report('Bitte Play drücken'));
-}
-function preview(item,target,mode='detail'){
- stop();if(!item||!target)return;
- const layer=document.createElement('div');
- layer.className='sp-cinema sp-cinema-'+mode;
- const image=document.createElement('img');image.className='sp-cinema-image';image.alt='';image.src=item.backdrop||item.poster;
- const shade=document.createElement('div');shade.className='sp-cinema-shade';
- const status=document.createElement('span');status.className='sp-cinema-status';
- status.textContent=item.previewVideo?'VIDEO-VORSCHAU':'BILDVORSCHAU';
- layer.append(image,shade,status);target.append(layer);
- current={layer,video:null,mode,item};
- if(!item.previewVideo){layer.classList.add('sp-cinema-motion');return}
- const video=document.createElement('video');video.className='sp-cinema-video';
- video.muted=true;video.defaultMuted=true;video.setAttribute('muted','');
- video.autoplay=true;video.loop=true;video.playsInline=true;video.setAttribute('playsinline','');video.preload='auto';
- video.poster=item.backdrop||item.poster;layer.insertBefore(video,shade);current.video=video;
- if(matchMedia('(prefers-reduced-motion: reduce)').matches||navigator.connection?.saveData){
-  layer.classList.add('sp-cinema-motion');status.textContent='Zum Starten auf Play drücken';return;
- }
- bind(video,item,layer,status);
-}
-const hero=item=>preview(item,document.querySelector('#heroBackground'),'hero');
-const open=item=>preview(item,document.querySelector('#detailContent .detail-backdrop'),'detail');
-function playCurrent(){
- if(!current?.item.previewVideo)return;
- const {layer,item}=current;let {video}=current;
- if(!video){
-  video=document.createElement('video');video.className='sp-cinema-video';video.muted=true;video.playsInline=true;video.loop=true;video.setAttribute('playsinline','');video.controls=true;
-  layer.insertBefore(video,layer.querySelector('.sp-cinema-shade'));current.video=video;
-  bind(video,item,layer,layer.querySelector('.sp-cinema-status'));
- }else{video.controls=true;video.play().catch(()=>{layer.querySelector('.sp-cinema-status').textContent='Bitte Play im Player drücken'})}
-}
-function player(item,area){
- stop();area.replaceChildren();
- const video=document.createElement('video');video.className='sp-player-video';
- video.controls=true;video.autoplay=true;video.playsInline=true;video.setAttribute('playsinline','');video.preload='auto';video.poster=item.backdrop||item.poster;
- const message=document.createElement('p');message.className='sp-player-error';message.hidden=true;
- message.textContent='Video kann nicht geladen werden. Videoquelle unter dem Player öffnen.';
- let backup=false;
- video.addEventListener('error',()=>{if(!backup&&item.previewBackup){backup=true;video.src=item.previewBackup;video.load();video.play().catch(()=>{})}else message.hidden=false});
- area.append(video,message);video.src=item.previewVideo;video.load();video.play().catch(()=>{});return video;
-}
-document.addEventListener('pointerover',e=>{
- if(e.pointerType==='touch')return;
- const card=e.target.closest('.poster-card[data-open]');
- if(!card||card.contains(e.relatedTarget))return;
- clearTimeout(hoverTimer);
- hoverTimer=setTimeout(()=>{
-  if(!card.isConnected||!card.matches(':hover')||document.querySelector('dialog[open]'))return;
-  const item=window.CATALOG.find(x=>x.id===card.dataset.open);
-  if(item)preview(item,card.querySelector('.poster-art'),'card');
- },450);
-});
-document.addEventListener('pointerout',e=>{
- const card=e.target.closest('.poster-card[data-open]');
- if(card&&!card.contains(e.relatedTarget)){
-  clearTimeout(hoverTimer);
-  if(current?.mode==='card'){stop();const i=Number(document.querySelector('#heroCurrent')?.textContent||'1')-1;
-   const item=window.CATALOG.find(x=>x.id===window.HERO_IDS[i]);if(item&&!document.querySelector('dialog[open]'))hero(item)}
- }
-});
-document.addEventListener('visibilitychange',()=>{if(document.hidden)stop()});
-window.StreamingPlaceCinema={hero,open,close:stop,playCurrent,player,isPlaying:()=>!!current?.video&&!current.video.paused};
+  'use strict';
+  let active = null;
+  let hoverTimer = null;
+
+  const find = id => (window.CATALOG || []).find(item => item.id === id);
+  const stop = () => {
+    clearTimeout(hoverTimer);
+    if (!active) return;
+    const { layer, video } = active;
+    if (video) {
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+    }
+    // Removing the iframe stops external video playback immediately.
+    layer.remove();
+    active = null;
+  };
+
+  function youtube(item, shouldAutoplay = true) {
+    const iframe = document.createElement('iframe');
+    const id = encodeURIComponent(item.trailer);
+    const params = new URLSearchParams({
+      autoplay: shouldAutoplay ? '1' : '0',
+      mute: '1',
+      playsinline: '1',
+      controls: '1',
+      rel: '0',
+      loop: '1',
+      playlist: item.trailer,
+      enablejsapi: '1'
+    });
+    iframe.className = 'sp-youtube-frame';
+    iframe.title = item.title + ' – offizieller Trailer (YouTube)';
+    iframe.src = 'https://www.youtube-nocookie.com/embed/' + id + '?' + params.toString();
+    iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.setAttribute('loading', 'eager');
+    return iframe;
+  }
+
+  function preview(item, target, mode) {
+    stop();
+    if (!item || !target) return;
+    const layer = document.createElement('div');
+    layer.className = 'sp-cinema-v14 sp-cinema-' + mode;
+    layer.dataset.titleId = item.id;
+    const still = document.createElement('img');
+    still.alt = '';
+    still.className = 'sp-v14-still';
+    still.src = item.backdrop || item.poster;
+    layer.append(still);
+    target.append(layer);
+    active = { layer, video: null, mode, item };
+
+    if (item.previewVideo) {
+      const video = document.createElement('video');
+      video.className = 'sp-v14-video';
+      video.src = item.previewVideo;
+      video.muted = true;
+      video.defaultMuted = true;
+      video.autoplay = true;
+      video.loop = true;
+      video.playsInline = true;
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
+      video.controls = true;
+      video.preload = 'metadata';
+      video.addEventListener('playing', () => layer.classList.add('sp-ready'));
+      video.addEventListener('error', () => layer.classList.add('sp-v14-motion'));
+      layer.append(video);
+      active.video = video;
+      video.play().catch(() => layer.classList.add('sp-v14-motion'));
+      return;
+    }
+
+    if (item.trailer && mode !== 'card') {
+      layer.append(youtube(item));
+      return;
+    }
+
+    // On small poster cards a YouTube embed would violate its 200px player minimum.
+    // The card still opens a proper, full-sized trailer player on click.
+    layer.classList.add('sp-v14-motion');
+  }
+
+  const hero = item => preview(item, document.querySelector('#heroVideoStage'), 'hero');
+  const open = item => preview(item, document.querySelector('#detailContent .detail-backdrop'), 'detail');
+  function playCurrent() {
+    if (!active) return;
+    if (active.video) {
+      active.video.play().catch(() => {});
+    } else if (active.item.trailer) {
+      const el = active.mode === 'hero'
+        ? document.querySelector('#heroTrailer')
+        : document.querySelector('#detailContent [data-trailer]');
+      if (el) el.click();
+      else window.open('https://www.youtube.com/watch?v=' + active.item.trailer, '_blank', 'noopener');
+    }
+  }
+  function player(item, target) {
+    stop();
+    target.replaceChildren();
+    if (item.trailer) {
+      target.append(youtube(item, true));
+      return;
+    }
+    if (item.previewVideo) {
+      const video = document.createElement('video');
+      video.className = 'sp-player-video';
+      video.controls = true;
+      video.playsInline = true;
+      video.src = item.previewVideo;
+      target.append(video);
+      video.play().catch(() => {});
+    }
+  }
+
+  document.addEventListener('pointerover', event => {
+    if (event.pointerType === 'touch') return;
+    const card = event.target.closest('.poster-card[data-open]');
+    if (!card || card.contains(event.relatedTarget)) return;
+    clearTimeout(hoverTimer);
+    hoverTimer = setTimeout(() => {
+      if (!card.isConnected || !card.matches(':hover') || document.querySelector('dialog[open]')) return;
+      const item = find(card.dataset.open);
+      if (item) preview(item, card.querySelector('.poster-art'), 'card');
+    }, 450);
+  });
+  document.addEventListener('pointerout', event => {
+    const card = event.target.closest('.poster-card[data-open]');
+    if (!card || card.contains(event.relatedTarget)) return;
+    clearTimeout(hoverTimer);
+    if (active?.mode !== 'card') return;
+    stop();
+    if (!document.querySelector('dialog[open]')) {
+      const index = Math.max(0, Number(document.querySelector('#heroCurrent')?.textContent || 1) - 1);
+      const item = find((window.HERO_IDS || [])[index]);
+      if (item) hero(item);
+    }
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stop();
+  });
+
+  window.StreamingPlaceCinema = {
+    hero, open, close: stop, playCurrent, player,
+    isPlaying: () => false
+  };
 })();

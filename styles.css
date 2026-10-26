@@ -138,3 +138,59 @@ dialog{border:0;padding:0;background:none;color:inherit;max-width:none;max-heigh
 .poster-card[data-open="sintel-preview"] .poster-provider,.poster-card[data-open="preview-demo"] .poster-provider{background:#ce2348;color:white}
 @media(max-width:680px){#heroPreviewPlay{font-size:11px}.sp-cinema-status{top:16px;left:16px}}
 @media(prefers-reduced-motion:reduce){.sp-cinema-motion .sp-cinema-image{animation:none}}
+
+/* v1.4 – all 33 catalog titles have official trailer playback and visible hero embed */
+#heroVideoStage.hero-video-stage {
+  position:absolute;right:3.5%;top:21%;width:min(49%,700px);
+  aspect-ratio:16/9;z-index:2;border-radius:16px;overflow:hidden;
+  background:rgba(4,6,10,.8);
+  border:1px solid rgba(255,255,255,.2);
+  box-shadow:0 35px 85px rgba(0,0,0,.6);
+}
+#heroVideoStage>.sp-cinema-v14{position:absolute;inset:0}
+.sp-cinema-v14{position:absolute;inset:0;background:#11151d;overflow:hidden;isolation:isolate}
+.sp-cinema-v14>.sp-v14-still{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sp-cinema-v14>.sp-youtube-frame,.sp-cinema-v14>.sp-v14-video{
+ position:absolute;inset:0;width:100%;height:100%;border:0;display:block;z-index:2
+}
+.sp-cinema-v14.sp-v14-motion .sp-v14-still{animation:sp-pan 10s ease-in-out infinite alternate}
+.hero-content{z-index:3;pointer-events:none}
+.hero-content button,.hero-content a,.hero-content .hero-copy,.hero-content .hero-foot{pointer-events:auto}
+.hero-copy{width:min(510px,45vw)}
+#detailContent .detail-backdrop{height:400px;overflow:hidden;background:#10131c}
+#detailContent .detail-backdrop>.sp-cinema-v14{z-index:3}
+#detailContent .detail-backdrop:has(.sp-cinema-v14)::after{display:none}
+#detailContent .detail-main{margin-top:0;padding-top:24px}
+#detailContent .detail-info{padding-top:8px}
+#detailContent .detail-poster{width:155px}
+#detailContent .detail-close{z-index:14;background:rgba(10,12,18,.75)}
+.sp-card-trailer{
+ position:absolute;z-index:12;left:10px;bottom:11px;display:flex;align-items:center;
+ justify-content:center;gap:6px;padding:7px 10px;border-radius:7px;
+ border:1px solid rgba(255,255,255,.48);background:rgba(12,14,20,.85);
+ color:white;font:800 11px Manrope,sans-serif;cursor:pointer;
+ opacity:0;transform:translateY(5px);transition:opacity .2s,transform .2s
+}
+.sp-card-trailer svg{width:13px;height:13px}
+.poster-card:hover .sp-card-trailer,.sp-card:focus-within .sp-card-trailer{opacity:1;transform:none}
+.poster-art>.sp-cinema-v14{z-index:4;pointer-events:none}
+.poster-art>.sp-cinema-v14 .sp-youtube-frame{pointer-events:none}
+.poster-art>.poster-hover{z-index:5;pointer-events:none}
+.poster-art>.poster-provider{z-index:8}
+.poster-art>.card-save{z-index:14}
+#playerFrame>.sp-youtube-frame{position:absolute;inset:0;width:100%;height:100%;border:0}
+@media(hover:none){.sp-card-trailer{opacity:1;transform:none}}
+@media(max-width:780px){
+  .hero{min-height:795px;height:auto;max-height:none}
+  #heroVideoStage.hero-video-stage{left:15px;right:15px;top:100px;width:auto;max-width:none;border-radius:12px}
+  .hero-content{height:auto;min-height:795px;padding-top:calc(100px + (100vw - 30px)*.5625 + 26px)}
+  .hero-topline{display:none}
+  .hero-copy{width:100%;margin:8px 0 52px}
+  .hero-copy h1{font-size:clamp(38px,9vw,66px)}
+  .hero-description{max-width:100%}
+  #detailContent .detail-backdrop{height:min(57vw,320px)}
+  #detailContent .detail-main{margin-top:0;padding:18px 18px 30px;gap:15px}
+  #detailContent .detail-poster{width:92px}
+  #detailContent .detail-info{padding-top:0}
+}
+@media(prefers-reduced-motion:reduce){.sp-cinema-v14.sp-v14-motion .sp-v14-still{animation:none}}

@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://static.tvmaze.com" />
   <link rel="preconnect" href="https://image.tmdb.org" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./styles.css?v=1.3" />
+  <link rel="stylesheet" href="./styles.css?v=1.4" />
 </head>
 <body>
   <svg class="svg-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -61,6 +61,7 @@
   <main id="appMain">
     <section class="hero" id="hero" aria-label="Empfehlung des Tages">
       <div class="hero-background" id="heroBackground"></div>
+      <div class="hero-video-stage" id="heroVideoStage" aria-label="Offizielle Trailer-Vorschau"></div>
       <div class="hero-noise"></div>
       <div class="hero-content content-width" id="heroContent">
         <div class="hero-topline"><span class="eyebrow-line"></span><span id="heroKicker">STREAMING PLACE ORIGINAL PICK</span></div>
@@ -117,8 +118,8 @@
   <dialog id="trailerDialog" class="trailer-dialog" aria-label="Trailer-Player"><div class="player-shell"><div class="player-top"><div><span class="section-kicker"><span class="small-red-square"></span> NOW PLAYING</span><h3 id="playerTitle">Trailer</h3></div><button class="dialog-close" id="closeTrailer" aria-label="Trailer schließen"><svg><use href="#i-x"/></svg></button></div><div class="player-frame" id="playerFrame"></div><div class="player-bottom"><span>OFFIZIELLER TRAILER • YOUTUBE</span><a href="#" target="_blank" rel="noopener noreferrer" id="playerYouTube">Auf YouTube öffnen <svg><use href="#i-external"/></svg></a></div></div></dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="./data.js?v=1.3"></script>
-  <script src="./cinema.js?v=1.3"></script>
-  <script src="./app.js?v=1.3"></script>
+  <script src="./data.js?v=1.4"></script>
+  <script src="./cinema.js?v=1.4"></script>
+  <script src="./app.js?v=1.4"></script>
 </body>
 </html>

@@ -11,8 +11,6 @@ const movie = (id, title, poster, year, genres, description, extra = {}) => ({
 });
 
 window.CATALOG = [
-  {id:'sintel-preview',title:'Sintel – Original-Trailer',provider:'Open Movie Showcase',poster:'https://media.w3.org/2010/05/sintel/poster.png',backdrop:'https://media.w3.org/2010/05/sintel/poster.png',year:2010,genres:['Fantasy','Animation','Kurzfilm'],description:'Ein echter Filmtrailer als HTML5-Vorschau. © Blender Foundation | durian.blender.org (CC BY 3.0).',type:'Film',duration:'52 Sek. Trailer',age:'12+',previewVideo:'https://media.w3.org/2010/05/sintel/trailer.mp4',previewBackup:'https://test-videos.co.uk/vids/sintel/mp4/h264/720/Sintel_720_10s_2MB.mp4',watchUrl:'https://durian.blender.org/'},
-  {id:'preview-demo',title:'Big Buck Bunny · Video-Demo',provider:'Streaming Place Demo',poster:'https://peach.blender.org/wp-content/uploads/title_anouncement.jpg',backdrop:'https://peach.blender.org/wp-content/uploads/title_anouncement.jpg',year:2008,genres:['Animation','Demo'],description:'Echte automatische HTML5-Videovorschau mit dem offen lizenzierten Blender-Kurzfilm Big Buck Bunny (CC BY 3.0). Diese Demo ist kein Trailer eines Streamingdienstes.',type:'Film',duration:'Demo',age:'0+',previewVideo:'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4',previewBackup:'https://www.w3schools.com/html/mov_bbb.mp4',watchUrl:'https://peach.blender.org/'},
   tv('wednesday', 'Wednesday', 'Netflix', '586/1466410', 2022, ['Mystery','Fantasy','Comedy'], 'Wednesday Addams wird an die Nevermore Academy geschickt. Zwischen dunklen Geheimnissen, rätselhaften Visionen und einer Mordserie entdeckt sie, dass Anderssein ihre größte Stärke ist.', { badge:'Top-Highlight', seasons:2, age:'16+', match:'98%', backdrop:'https://static.tvmaze.com/uploads/images/original_untouched/423/1059627.jpg', trailer:'uQx8jKiIDTI', watchUrl:'https://www.netflix.com/de/title/81231974' }),
   tv('stranger-things', 'Stranger Things', 'Netflix', '595/1489169', 2016, ['Sci-Fi','Mystery','Drama'], 'Als ein Junge verschwindet, stoßen seine Freunde auf eine geheime Welt, gefährliche Experimente und ein Mädchen mit außergewöhnlichen Kräften.', { seasons:5, age:'16+', match:'97%', backdrop:'https://static.tvmaze.com/uploads/images/original_untouched/70/175852.jpg', trailer:'PssKpzB0Ah0', watchUrl:'https://www.netflix.com/de/title/80057281' }),
   tv('last-of-us', 'The Last of Us', 'Sky / WOW', '563/1409008', 2023, ['Drama','Thriller','Abenteuer'], 'In einer Welt nach dem Zusammenbruch der Zivilisation begeben sich Joel und Ellie auf eine Reise, die alles von ihnen verlangt.', { seasons:2, age:'16+', match:'96%', backdrop:'https://static.tvmaze.com/uploads/images/original_untouched/429/1072778.jpg', trailer:'_zHPsmXCjB0', watchUrl:'https://www.wowtv.de/' }),
@@ -59,4 +57,44 @@ window.PROVIDERS = [
   { name: 'Apple TV+', slug: 'Apple TV+', glyph:'tv+' },
 ];
 
-window.HERO_IDS = ['sintel-preview','preview-demo','wednesday','fallout','last-of-us','dune-2'];
+window.HERO_IDS = ['wednesday','fallout','last-of-us','dune-2','severance'];
+
+// Official publisher trailer links. Embedded using the YouTube player; no rehosting.
+const OFFICIAL_TRAILERS = {
+  "wednesday": "03u4xyj0TH4",
+  "stranger-things": "PssKpzB0Ah0",
+  "last-of-us": "_zHPsmXCjB0",
+  "fallout": "ECI3eCAxRGw",
+  "the-boys": "EzFXDvC-EwM",
+  "house-dragon": "DotnJ7tTA34",
+  "only-murders": "fZ29EePtv0A",
+  "mandalorian": "aOC8E8z_ifw",
+  "loki": "nW948Va-l10",
+  "the-bear": "vOyRo-Yjr2Q",
+  "tulsa-king": "FVjed2sl1bo",
+  "yellowstone": "n17AZkUXy58",
+  "halo": "5KZ3MKraNKY",
+  "severance": "_UXKlYvLGJY",
+  "silo": "8ZYhuvIv1pA",
+  "squid-game": "oqxAJKy0ii4",
+  "peaky": "2nsT9uQPIrk",
+  "euphoria": "-1UJJPAWudQ",
+  "andor": "cKOegEuCcfw",
+  "white-lotus": "TGLq7_MonZ4",
+  "penguin": "sfJG6IiA_s8",
+  "wheel-time": "qk0D4OV95bQ",
+  "reacher": "PCbp1FfipPg",
+  "dune-2": "Way9Dexny3w",
+  "oppenheimer": "uYPbbksJxIg",
+  "barbie": "pBk4NYhWNMM",
+  "interstellar": "zSWdZVtXT7E",
+  "batman": "mqqft2x_Aa4",
+  "dark-knight": "EXeTwQWrcwY",
+  "spiderverse": "cqGjhVJWtEg",
+  "top-gun": "giXco2jaZ_4",
+  "avatar": "d9MyW72ELq0",
+  "poor-things": "RlbR5N6veqw"
+};
+for (const item of window.CATALOG) {
+  if (OFFICIAL_TRAILERS[item.id]) item.trailer = OFFICIAL_TRAILERS[item.id];
+}
