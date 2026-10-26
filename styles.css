@@ -292,3 +292,7 @@ dialog{border:0;padding:0;background:none;color:inherit;max-width:none;max-heigh
 @media(min-width:781px) and (max-width:1120px){
  #heroVideoStage.hero-video-stage{width:52vw;right:2.5%}
 }
+
+/* v1.5.2: keep the close button above, never over a YouTube player */
+#detailContent.detail-shell{padding-top:54px}
+#detailContent.detail-shell>.detail-close{top:9px;right:16px}
