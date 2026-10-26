@@ -152,14 +152,20 @@
             },
             onAutoplayBlocked: () => {
               if (active !== ctx) return;
-              // First retry muted playback; only show fallback if it still cannot play.
-              try { ctx.player?.mute(); ctx.player?.playVideo(); } catch (_) {}
-              clearTimeout(ctx.blockedTimer);
-              ctx.blockedTimer = setTimeout(() => {
-                if (active === ctx && !ctx.layer.classList.contains('sp-auto-playing')) {
-                  showUnavailable(ctx, 'restricted');
-                }
-              }, 2200);
+              // An automatic play retry is permitted only once: repeated blocked
+              // events would otherwise continuously postpone the fallback.
+              if (!ctx.retryAttempted) {
+                ctx.retryAttempted = true;
+                try { ctx.player?.mute(); ctx.player?.playVideo(); } catch (_) {}
+              }
+              if (!ctx.blockedTimer) {
+                ctx.blockedTimer = setTimeout(() => {
+                  ctx.blockedTimer = null;
+                  if (active === ctx && !ctx.layer.classList.contains('sp-auto-playing')) {
+                    showUnavailable(ctx, 'restricted');
+                  }
+                }, 2600);
+              }
             },
             onError: event => {
               if (active !== ctx) return;
