@@ -198,6 +198,7 @@
   function openTrailer(id) {
     const item = byId.get(id); if (!item) return;
     if ($('#detailDialog').open) $('#detailDialog').close();
+    window.StreamingPlaceCinema?.close();
     $('#playerTitle').textContent = item.title;
     const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(item.title+' official trailer')}`;
     $('#playerYouTube').href = item.trailer ? `https://www.youtube.com/watch?v=${item.trailer}` : searchUrl;
@@ -227,7 +228,8 @@
     $('#searchResults').innerHTML = matches.length ? matches.map(item=>card(item)).join('') : `<div class="search-placeholder">${icon('search')}<p>Keine Treffer. Versuch einen anderen Titel, Anbieter oder ein Genre.</p></div>`;
   }
   function openSearch() {
-    $('#searchDialog').showModal(); $('#searchInput').value = ''; searchResults('');
+    $('#searchDialog').showModal();
+    window.StreamingPlaceCinema?.close(); $('#searchInput').value = ''; searchResults('');
     setTimeout(()=>$('#searchInput').focus(),40);
     clearInterval(state.heroTimer);
   }
@@ -284,7 +286,10 @@
   $('#detailDialog').addEventListener('click', e => { if (e.target === $('#detailDialog')) $('#detailDialog').close(); });
   $('#trailerDialog').addEventListener('click', e => { if (e.target === $('#trailerDialog')) closeTrailer(); });
   $('#trailerDialog').addEventListener('close', () => { $('#playerFrame').replaceChildren(); window.StreamingPlaceCinema?.hero(HERO[state.heroIndex]); restartHeroTimer(); });
-  $('#searchDialog').addEventListener('close', restartHeroTimer);
+  $('#searchDialog').addEventListener('close', () => {
+    if (!$('dialog[open]').length) window.StreamingPlaceCinema?.hero(HERO[state.heroIndex]);
+    restartHeroTimer();
+  });
   $('#detailDialog').addEventListener('close', () => { window.StreamingPlaceCinema?.close(); if (!$('#trailerDialog').open) { window.StreamingPlaceCinema?.hero(HERO[state.heroIndex]); restartHeroTimer(); } });
   window.addEventListener('scroll', () => $('#siteHeader').classList.toggle('scrolled', window.scrollY > 20), {passive:true});
   document.addEventListener('visibilitychange', () => { if (!document.hidden && !$$('dialog[open]').length) restartHeroTimer(); });

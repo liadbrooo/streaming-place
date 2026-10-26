@@ -320,8 +320,14 @@
   },{passive:true});
 
   document.addEventListener('visibilitychange',()=>{
-    if (!document.hidden) return;
-    if (active) removeMedia(active);
+    if (document.hidden) {
+      if (active) removeMedia(active);
+      return;
+    }
+    if (!active || active.started) return;
+    const rect = active.layer.getBoundingClientRect();
+    const visibleHeight = Math.max(0, Math.min(rect.bottom, innerHeight) - Math.max(rect.top, 0));
+    if (rect.height && visibleHeight / rect.height >= .5) start(active);
   });
 
   window.StreamingPlaceCinema = {

@@ -285,3 +285,10 @@ dialog{border:0;padding:0;background:none;color:inherit;max-width:none;max-heigh
 @media(prefers-reduced-motion:reduce){
  .sp-auto-preview:not(.sp-auto-playing)>.sp-auto-still{animation:none}
 }
+
+/* v1.5.1 – do not hide an autoplaying third-party player behind overlays */
+.sp-auto-preview .sp-auto-slot{opacity:1}
+.sp-auto-preview.sp-auto-playing .sp-auto-slot{opacity:1}
+@media(min-width:781px) and (max-width:1120px){
+ #heroVideoStage.hero-video-stage{width:52vw;right:2.5%}
+}
