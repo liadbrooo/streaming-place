@@ -218,3 +218,70 @@ dialog{border:0;padding:0;background:none;color:inherit;max-width:none;max-heigh
  .hero-content{padding-top:calc(126px + max(200px,(100vw - 30px)*.5625))}
 }
 @media(prefers-reduced-motion:reduce){.sp-trailer-flyout{animation:none}}
+
+/* Streaming Place 1.5 – uncluttered, auto-playing cinematic trailer presentation.
+   YouTube media is never obscured by custom overlays or cropped controls. */
+#heroVideoStage.hero-video-stage {
+  right:4.2%;left:auto;top:50%;transform:translateY(-50%);
+  width:min(56.5vw,920px);height:auto;min-height:0;
+  aspect-ratio:16/9;border:0;border-radius:4px;
+  background:#0a0e16;box-shadow:none;overflow:hidden;z-index:2;
+}
+#heroVideoStage>.sp-auto-preview{position:absolute;inset:0}
+.sp-auto-preview{position:absolute;inset:0;overflow:hidden;background:#0b1018}
+.sp-auto-still{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sp-auto-slot{position:absolute;inset:0;z-index:2}
+.sp-auto-slot iframe,.sp-auto-slot .sp-auto-native {
+  position:absolute!important;inset:0;width:100%!important;height:100%!important;
+  border:0;display:block;background:#090c10
+}
+.sp-auto-preview .sp-auto-slot {opacity:0;transition:opacity .8s ease}
+.sp-auto-preview.sp-auto-playing .sp-auto-slot{opacity:1}
+.sp-auto-preview:not(.sp-auto-playing)>.sp-auto-still{animation:sp-pan 12s ease-in-out infinite alternate}
+.hero-content{z-index:3;pointer-events:none}
+.hero-content button,.hero-content a,.hero-content .hero-copy,.hero-content .hero-foot{pointer-events:auto}
+.hero-copy{width:min(480px,40vw)}
+#detailContent .detail-shell{padding-top:54px}
+#detailContent .detail-close{top:9px;right:16px;z-index:14}
+#detailContent .detail-backdrop {
+ position:relative;height:auto;min-height:200px;aspect-ratio:16/9;overflow:hidden;background:#10151d
+}
+#detailContent .detail-backdrop>.sp-auto-preview{position:absolute;inset:0;z-index:4}
+#detailContent .detail-backdrop:has(.sp-auto-preview)::after{display:none}
+#detailContent .detail-main{margin-top:0;padding-top:24px}
+#detailContent .detail-info{padding-top:8px}
+#detailContent .detail-poster{width:155px}
+.sp-auto-hover .sp-flyout-media{position:relative;overflow:hidden;background:#080b10}
+.sp-auto-hover .sp-auto-slot{opacity:0;transition:opacity .6s ease}
+.sp-auto-hover:has(.sp-auto-slot iframe) .sp-auto-slot{opacity:1}
+.sp-auto-hover .sp-auto-still{object-fit:cover}
+.sp-auto-hover .sp-auto-slot iframe{z-index:2}
+.sp-trailer-flyout .sp-flyout-footer{position:relative;z-index:4}
+.sp-card-trailer{display:none!important}
+#heroPreviewPlay{display:none!important}
+@media(min-width:781px) and (max-width:1120px){
+ #heroVideoStage.hero-video-stage{right:2.5%;width:56vw}
+ .hero-copy{width:40vw}
+}
+@media(max-width:780px){
+ .hero{min-height:795px;height:auto;max-height:none}
+ #heroVideoStage.hero-video-stage {
+  top:100px;left:15px;right:15px;transform:none;
+  width:calc(100% - 30px);height:auto;min-height:200px;
+  aspect-ratio:16/9;border-radius:9px
+ }
+ .hero-content{
+  height:auto;min-height:795px;
+  padding-top:calc(128px + max(200px,(100vw - 30px)*.5625));
+ }
+ .hero-topline{display:none}
+ .hero-copy{width:100%;margin:8px 0 50px}
+ .hero-copy h1{font-size:clamp(38px,9vw,66px)}
+ #detailContent .detail-backdrop{height:auto;min-height:200px;aspect-ratio:16/9}
+ #detailContent .detail-main{margin-top:0;padding:18px 18px 30px;gap:15px}
+ #detailContent .detail-info{padding-top:0}
+ #detailContent .detail-poster{width:92px}
+}
+@media(prefers-reduced-motion:reduce){
+ .sp-auto-preview:not(.sp-auto-playing)>.sp-auto-still{animation:none}
+}
