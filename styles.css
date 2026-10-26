@@ -58,3 +58,16 @@ dialog{border:0;padding:0;background:none;color:inherit;max-width:none;max-heigh
 @keyframes cinema-in { from {opacity:0; transform:translateY(30px) scale(.97)} to {opacity:1; transform:none} }
 @media(max-width:600px) { .detail-dialog {border-radius:0} .detail-backdrop {height:340px;border-radius:0} .detail-main {margin-top:-65px} .detail-info {padding-top:0} .cinema-layer iframe {width:180%;left:-40%} }
 @media(prefers-reduced-motion:reduce) { .detail-dialog[open] {animation:none} }
+
+/* Streaming Place 1.1.1 – responsive trailer preview */
+.poster-art {position:relative;overflow:hidden}
+.poster-art .cinema-layer {z-index:2;pointer-events:none}
+.poster-art .cinema-layer iframe {position:absolute;inset:0;width:100%;height:100%;transform:scale(1.8)}
+.cinema-layer {isolation:isolate}
+.cinema-still {position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.8)}
+.cinema-animated .cinema-still {animation:cinema-kenburns 9s ease-in-out infinite alternate}
+.cinema-layer iframe {z-index:1;opacity:0;transition:opacity .65s ease}
+.cinema-layer.playing iframe {opacity:1}
+.cinema-label {z-index:3}
+@keyframes cinema-kenburns {from{transform:scale(1)}to{transform:scale(1.14)}}
+@media(prefers-reduced-motion:reduce){.cinema-animated .cinema-still{animation:none}}
