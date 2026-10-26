@@ -85,3 +85,23 @@ dialog{border:0;padding:0;background:none;color:inherit;max-width:none;max-heigh
 .detail-backdrop .cinema-label {z-index:3}
 .detail-close {z-index:12}
 @media(max-width:600px){.detail-backdrop .cinema-layer iframe{width:220%;height:125%}}
+
+/* v1.2 – native Netflix-inspired cinematic cards and detail preview */
+.poster-art{isolation:isolate}
+.poster-art>.sp-cinema{position:absolute;inset:0;z-index:5;overflow:hidden;pointer-events:none;border-radius:inherit}
+.sp-cinema{position:absolute;inset:0;overflow:hidden;isolation:isolate;background:#10151c;pointer-events:none}
+.sp-cinema-image,.sp-cinema-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sp-cinema-image{filter:brightness(.78);transition:transform 1.5s ease}
+.sp-cinema-motion .sp-cinema-image{animation:sp-pan 11s ease-in-out infinite alternate}
+.sp-cinema-video{opacity:0;transition:opacity .75s ease;z-index:1}
+.sp-cinema-playing .sp-cinema-video{opacity:1}
+.sp-cinema-shade{position:absolute;inset:0;z-index:2;background:linear-gradient(0deg,rgba(9,11,16,.86),transparent 65%)}
+.sp-cinema-tag{position:absolute;top:26px;left:28px;z-index:3;color:white;font-size:10px;letter-spacing:2px;font-weight:800;text-shadow:0 2px 12px #000}
+.poster-art>.poster-hover{z-index:7;pointer-events:none}
+.poster-art>.poster-provider{z-index:8}
+.poster-art>.card-save{z-index:9}
+.detail-backdrop>.sp-cinema{z-index:1}
+.detail-backdrop::after{z-index:2;pointer-events:none}
+.detail-close{z-index:12}
+@keyframes sp-pan{from{transform:scale(1.01) translateX(-1%)}to{transform:scale(1.16) translateX(1%)}}
+@media(prefers-reduced-motion:reduce){.sp-cinema-motion .sp-cinema-image{animation:none}}
