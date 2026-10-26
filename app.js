@@ -66,7 +66,7 @@
     $('#viewHeading').innerHTML = `<div><div class="section-kicker"><span class="small-red-square"></span> ${kicker}</div><h2>${titleHtml}</h2><p>${description}</p></div>${showAllButton ? `<button class="text-link" data-view="all">Alle Titel entdecken ${icon('arrow')}</button>` : ''}`;
   };
   const ids = {
-    picks: ['wednesday','fallout','last-of-us','dune-2','severance','mandalorian','the-boys','oppenheimer','reacher','silo'],
+    picks: ['sintel-preview','preview-demo','wednesday','fallout','last-of-us','dune-2','severance','mandalorian','the-boys','oppenheimer','reacher','silo'],
     trending: ['stranger-things','the-boys','house-dragon','squid-game','fallout','the-bear','severance','wednesday','last-of-us','reacher'],
     movies: ['dune-2','oppenheimer','interstellar','batman','spiderverse','top-gun','barbie','avatar','dark-knight','poor-things'],
     worlds: ['mandalorian','andor','loki','house-dragon','wheel-time','halo','silo','interstellar','avatar','dune-2'],
@@ -79,6 +79,7 @@
     if (state.provider !== 'all') { renderProviderSelection(); return; }
     setHead('CURATED FOR YOU', 'Was schaust du <em>heute?</em>', 'Die besten Geschichten. Überall zu Hause.', true);
     $('#contentSections').innerHTML = [
+      row('Diese Video-Vorschauen laufen wirklich', 'Offene Filmtrailer mit echtem HTML5-Video', ['sintel-preview','preview-demo']),
       row('Handverlesen für dich', 'Geschichten, die du nicht verpassen solltest', ids.picks),
       row('Gerade überall im Gespräch', 'Die beliebtesten Stories in unserem Showcase', ids.trending, true),
       editorialBanner(),
@@ -154,6 +155,10 @@
     $('#heroCurrent').textContent = String(state.heroIndex+1).padStart(2,'0');
     $('#heroProgress').innerHTML = HERO.map((x,index)=>`<button class="${state.heroIndex===index?'active':''}" data-slide="${index}" title="${esc(x.title)}" aria-label="${esc(x.title)} anzeigen"></button>`).join('');
     updateHeroSave();
+    $('#heroTotal').textContent = String(HERO.length).padStart(2,'0');
+    $('#heroPreviewPlay').hidden = !item.previewVideo;
+    $('#heroTrailer').innerHTML = icon('play')+' '+(item.previewVideo ? 'Trailer abspielen' : item.trailer ? 'Offizieller Trailer' : 'Trailer suchen');
+    window.StreamingPlaceCinema?.hero(item);
   }
   function updateHeroSave() {
     const saved = state.favorites.has(HERO[state.heroIndex].id);
@@ -162,7 +167,7 @@
   function restartHeroTimer() {
     clearInterval(state.heroTimer);
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    state.heroTimer = setInterval(()=>{if (!$$('dialog[open]').length && !document.hidden) changeSlide(1, false);},8000);
+    state.heroTimer = setInterval(()=>{if (!$('dialog[open]').length && !document.hidden && !window.StreamingPlaceCinema?.isPlaying()) changeSlide(1, false);},15000);
   }
   function changeSlide(direction, restart = true) {
     state.heroIndex = (state.heroIndex + direction + HERO.length) % HERO.length;
@@ -184,7 +189,7 @@
         <div class="detail-brand">${esc(item.provider.toUpperCase())}</div><h2>${esc(item.title)}</h2>
         <div class="detail-facts"><span>${item.year}</span><i class="dot"></i><span>${item.type}</span><i class="dot"></i><span>${esc(item.seasons ? item.seasons+' Staffel'+(item.seasons===1?'':'n') : item.duration||'') }</span><i class="dot"></i><span class="age-rating">${item.age||'12+'}</span></div>
         <p>${esc(item.description)}</p><div class="detail-tags">${item.genres.map(g=>`<span>${esc(g)}</span>`).join('')}</div>
-        <div class="detail-actions"><button class="button button-primary" data-trailer="${esc(id)}">${icon('play')} Trailer ansehen</button><a class="button button-glass" href="${esc(providerUrl(item))}" target="_blank" rel="noopener noreferrer">${icon('external')} ${esc(providerText)}</a><button class="circle-button ${saved?'saved':''}" data-detail-save="${esc(id)}" aria-label="${saved?'Aus Liste entfernen':'Zur Liste hinzufügen'}">${icon(saved?'check':'plus')}</button></div>
+        <div class="detail-actions"><button class="button button-primary" data-trailer="${esc(id)}">${icon('play')} Trailer ansehen</button>${item.previewVideo ? `<button class="button button-glass" data-cinema-play="1">${icon('play')} Vorschau starten</button>` : ''}<a class="button button-glass" href="${esc(providerUrl(item))}" target="_blank" rel="noopener noreferrer">${icon('external')} ${esc(providerText)}</a><button class="circle-button ${saved?'saved':''}" data-detail-save="${esc(id)}" aria-label="${saved?'Aus Liste entfernen':'Zur Liste hinzufügen'}">${icon(saved?'check':'plus')}</button></div>
         <div class="detail-availability"><h4>WO KANN ICH DAS ANSEHEN?</h4><p><strong>${esc(item.type === 'Film' ? 'Anbieter vergleichen' : item.provider)}</strong> · ${item.type === 'Film' ? 'Finde aktuelle Leih-, Kauf- und Abo-Angebote für Deutschland.' : 'Öffne den Anbieter, um Verfügbarkeit, Abo und Wiedergabe zu prüfen.'} Streaming Place spielt keine lizenzierten Vollversionen selbst ab.</p></div>
       </div></div><div class="detail-bottom">STREAMING PLACE SHOWCASE <span style="margin:0 10px;color:#4a515e">◆</span> Cover und Metadaten dienen der Entdeckung. Die Anbieter sind eigenständige Dienste.</div>`;
     dialog.showModal();
@@ -196,6 +201,17 @@
     $('#playerTitle').textContent = item.title;
     const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(item.title+' official trailer')}`;
     $('#playerYouTube').href = item.trailer ? `https://www.youtube.com/watch?v=${item.trailer}` : searchUrl;
+    if (item.previewVideo) {
+      $('#playerYouTube').href = item.previewVideo;
+      $('#playerYouTube').textContent = 'Video direkt öffnen';
+      document.querySelector('.player-bottom > span').textContent = 'OFFEN LIZENZIERTE FILMVORSCHAU · BLENDER FOUNDATION';
+      $('#trailerDialog').showModal();
+      window.StreamingPlaceCinema?.player(item, $('#playerFrame'));
+      clearInterval(state.heroTimer);
+      return;
+    }
+    document.querySelector('.player-bottom > span').textContent = 'OFFIZIELLER TRAILER · YOUTUBE';
+    $('#playerYouTube').innerHTML = 'Auf YouTube öffnen ' + icon('external');
     $('#playerFrame').innerHTML = item.trailer
       ? `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(item.trailer)}?autoplay=1&rel=0&modestbranding=1" title="${esc(item.title)} – offizieller Trailer" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`
       : `<div class="player-fallback">${icon('play')}<p>Für diesen Titel führt dich die Trailer-Suche zu YouTube. Vollständige Folgen und Filme findest du beim jeweiligen Streaming-Anbieter.</p><a class="button button-primary" href="${esc(searchUrl)}" target="_blank" rel="noopener noreferrer">Trailer auf YouTube finden ${icon('external')}</a></div>`;
@@ -222,6 +238,8 @@
     if (save) { event.preventDefault(); event.stopPropagation(); toggleSaved(save.dataset.save || save.dataset.detailSave); return; }
     const open = event.target.closest('[data-open]');
     if (open) { event.preventDefault(); if ($('#searchDialog').open) closeSearch(); showDetail(open.dataset.open); return; }
+    const cinemaPlay = event.target.closest('[data-cinema-play]');
+    if (cinemaPlay) { event.preventDefault(); window.StreamingPlaceCinema?.playCurrent(); return; }
     const trailer = event.target.closest('[data-trailer]');
     if (trailer) { event.preventDefault(); openTrailer(trailer.dataset.trailer); return; }
     const view = event.target.closest('[data-view]');
@@ -253,6 +271,7 @@
   $('#manifestoExplore').addEventListener('click', () => setView('all'));
   $('#heroTrailer').addEventListener('click', () => openTrailer(HERO[state.heroIndex].id));
   $('#heroDetails').addEventListener('click', () => showDetail(HERO[state.heroIndex].id));
+  $('#heroPreviewPlay').addEventListener('click', () => window.StreamingPlaceCinema?.playCurrent());
   $('#heroSave').addEventListener('click', () => toggleSaved(HERO[state.heroIndex].id));
   $('#heroPrevious').addEventListener('click', () => changeSlide(-1));
   $('#heroNext').addEventListener('click', () => changeSlide(1));
@@ -262,9 +281,9 @@
   $('#searchDialog').addEventListener('click', e => { if (e.target === $('#searchDialog')) closeSearch(); });
   $('#detailDialog').addEventListener('click', e => { if (e.target === $('#detailDialog')) $('#detailDialog').close(); });
   $('#trailerDialog').addEventListener('click', e => { if (e.target === $('#trailerDialog')) closeTrailer(); });
-  $('#trailerDialog').addEventListener('close', () => { $('#playerFrame').replaceChildren(); restartHeroTimer(); });
+  $('#trailerDialog').addEventListener('close', () => { $('#playerFrame').replaceChildren(); window.StreamingPlaceCinema?.hero(HERO[state.heroIndex]); restartHeroTimer(); });
   $('#searchDialog').addEventListener('close', restartHeroTimer);
-  $('#detailDialog').addEventListener('close', () => { window.StreamingPlaceCinema?.close(); restartHeroTimer(); });
+  $('#detailDialog').addEventListener('close', () => { window.StreamingPlaceCinema?.close(); if (!$('#trailerDialog').open) { window.StreamingPlaceCinema?.hero(HERO[state.heroIndex]); restartHeroTimer(); } });
   window.addEventListener('scroll', () => $('#siteHeader').classList.toggle('scrolled', window.scrollY > 20), {passive:true});
   document.addEventListener('visibilitychange', () => { if (!document.hidden && !$$('dialog[open]').length) restartHeroTimer(); });
 
