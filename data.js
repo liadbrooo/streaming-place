@@ -11,6 +11,7 @@ const movie = (id, title, poster, year, genres, description, extra = {}) => ({
 });
 
 window.CATALOG = [
+  {id:'preview-demo',title:'Big Buck Bunny · Video-Demo',provider:'Streaming Place Demo',poster:'https://peach.blender.org/wp-content/uploads/title_anouncement.jpg',backdrop:'https://peach.blender.org/wp-content/uploads/title_anouncement.jpg',year:2008,genres:['Animation','Demo'],description:'Echte automatische HTML5-Videovorschau mit dem offen lizenzierten Blender-Kurzfilm Big Buck Bunny (CC BY 3.0). Diese Demo ist kein Trailer eines Streamingdienstes.',type:'Film',duration:'Demo',age:'0+',previewVideo:'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',watchUrl:'https://peach.blender.org/'},
   tv('wednesday', 'Wednesday', 'Netflix', '586/1466410', 2022, ['Mystery','Fantasy','Comedy'], 'Wednesday Addams wird an die Nevermore Academy geschickt. Zwischen dunklen Geheimnissen, rätselhaften Visionen und einer Mordserie entdeckt sie, dass Anderssein ihre größte Stärke ist.', { badge:'Top-Highlight', seasons:2, age:'16+', match:'98%', backdrop:'https://static.tvmaze.com/uploads/images/original_untouched/423/1059627.jpg', trailer:'uQx8jKiIDTI', watchUrl:'https://www.netflix.com/de/title/81231974' }),
   tv('stranger-things', 'Stranger Things', 'Netflix', '595/1489169', 2016, ['Sci-Fi','Mystery','Drama'], 'Als ein Junge verschwindet, stoßen seine Freunde auf eine geheime Welt, gefährliche Experimente und ein Mädchen mit außergewöhnlichen Kräften.', { seasons:5, age:'16+', match:'97%', backdrop:'https://static.tvmaze.com/uploads/images/original_untouched/70/175852.jpg', trailer:'PssKpzB0Ah0', watchUrl:'https://www.netflix.com/de/title/80057281' }),
   tv('last-of-us', 'The Last of Us', 'Sky / WOW', '563/1409008', 2023, ['Drama','Thriller','Abenteuer'], 'In einer Welt nach dem Zusammenbruch der Zivilisation begeben sich Joel und Ellie auf eine Reise, die alles von ihnen verlangt.', { seasons:2, age:'16+', match:'96%', backdrop:'https://static.tvmaze.com/uploads/images/original_untouched/429/1072778.jpg', trailer:'_zHPsmXCjB0', watchUrl:'https://www.wowtv.de/' }),
@@ -57,4 +58,4 @@ window.PROVIDERS = [
   { name: 'Apple TV+', slug: 'Apple TV+', glyph:'tv+' },
 ];
 
-window.HERO_IDS = ['wednesday','fallout','last-of-us','dune-2'];
+window.HERO_IDS = ['preview-demo','wednesday','fallout','last-of-us','dune-2'];

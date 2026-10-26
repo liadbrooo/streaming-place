@@ -105,3 +105,7 @@ dialog{border:0;padding:0;background:none;color:inherit;max-width:none;max-heigh
 .detail-close{z-index:12}
 @keyframes sp-pan{from{transform:scale(1.01) translateX(-1%)}to{transform:scale(1.16) translateX(1%)}}
 @media(prefers-reduced-motion:reduce){.sp-cinema-motion .sp-cinema-image{animation:none}}
+
+/* v1.2.1: make working video demo visibly discoverable */
+.poster-card[data-open="preview-demo"] .poster-art{border:2px solid #ed335a}
+.poster-card[data-open="preview-demo"] .poster-provider{background:#ed335a;color:#fff}
