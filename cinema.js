@@ -11,6 +11,7 @@
   let leaveTimer = null;
   let apiPromise = null;
   let frameNumber = 0;
+  const isIOS = /iPad|iPhone|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
   function ensureYouTube() {
     if (window.YT?.Player) return Promise.resolve(window.YT);
@@ -49,6 +50,8 @@
     }
     clearTimeout(ctx.blockedTimer);
     clearTimeout(ctx.checkTimer);
+    clearTimeout(ctx.deadline);
+    ctx.deadline = null;
     ctx.iframe = null;
     ctx.slot?.replaceChildren();
     ctx.started = false;
@@ -105,6 +108,11 @@
   function startYoutube(ctx) {
     if (active !== ctx || ctx.started || document.hidden) return;
     ctx.started = true;
+    // Independent timeout: even when the YouTube API script never loads,
+    // a failed embed must not remain onscreen forever.
+    ctx.deadline = setTimeout(() => {
+      if (active === ctx && !ctx.layer.classList.contains('sp-auto-playing')) showUnavailable(ctx, 'restricted');
+    }, 10500);
     const iframe = document.createElement('iframe');
     iframe.className = 'sp-auto-iframe';
     iframe.id = 'sp-preview-player-' + (++frameNumber);
@@ -147,6 +155,7 @@
               if (event.data === 1) {
                 clearTimeout(ctx.blockedTimer);
                 clearTimeout(ctx.checkTimer);
+                clearTimeout(ctx.deadline);
                 ctx.layer.classList.add('sp-auto-playing');
               }
             },
@@ -207,6 +216,13 @@
       if (ctx.item.trailer) showUnavailable(ctx, 'restricted');
       return;
     }
+    if (isIOS && ctx.item.trailer && !ctx.item.previewVideo) {
+      // 2026: YouTube iframe embeds on WebKit may return Error 153.
+      // There is no legitimate forced-autoplay workaround for a blocked embed.
+      // Prefer a clearly working official trailer URL over a permanently broken player.
+      showUnavailable(ctx, 'restricted');
+      return;
+    }
     if (ctx.item.trailer) startYoutube(ctx);
     else startNative(ctx);
   }
@@ -243,7 +259,7 @@
     slot.className = 'sp-auto-slot';
     layer.append(still,slot);
     target.append(layer);
-    const ctx = {layer,slot,item,mode,started:false,observer:null,player:null,video:null};
+    const ctx = {layer,slot,item,mode,started:false,observer:null,player:null,video:null,deadline:null};
     active = ctx;
     observe(ctx);
   }
@@ -324,7 +340,7 @@
     host.style.width=width+'px';
     host.style.left=Math.max(12,Math.min(window.innerWidth-width-12,rect.left+rect.width/2-width/2))+'px';
     host.style.top=Math.max(70,Math.min(window.innerHeight-height-12,rect.top-25))+'px';
-    const ctx={layer:host,slot,item,mode:'card',anchor:card,started:false,observer:null,player:null,video:null};
+    const ctx={layer:host,slot,item,mode:'card',anchor:card,started:false,observer:null,player:null,video:null,deadline:null};
     active=ctx;
     host.addEventListener('pointerenter',()=>clearTimeout(leaveTimer));
     host.addEventListener('pointerleave',closeHoverWhenOutside);

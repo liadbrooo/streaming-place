@@ -197,6 +197,12 @@
   }
   function openTrailer(id) {
     const item = byId.get(id); if (!item) return;
+    // iOS WebKit may reject all embedded YouTube videos (Error 153).
+    // A user-initiated direct YouTube watch URL still plays in its own player.
+    if (/iPad|iPhone|iPod/i.test(navigator.userAgent) && item.trailer && !item.previewVideo) {
+      window.location.assign('https://www.youtube.com/watch?v=' + encodeURIComponent(item.trailer));
+      return;
+    }
     if ($('#detailDialog').open) $('#detailDialog').close();
     window.StreamingPlaceCinema?.close();
     $('#playerTitle').textContent = item.title;
