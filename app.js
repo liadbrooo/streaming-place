@@ -214,7 +214,7 @@
     document.querySelector('.player-bottom > span').textContent = 'OFFIZIELLER TRAILER · YOUTUBE';
     $('#playerYouTube').innerHTML = 'Auf YouTube öffnen ' + icon('external');
     $('#playerFrame').innerHTML = item.trailer
-      ? `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(item.trailer)}?autoplay=1&mute=0&playsinline=1&controls=1&rel=0" title="${esc(item.title)} – offizieller Trailer" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`
+      ? `<iframe src="https://www.youtube.com/embed/${encodeURIComponent(item.trailer)}?autoplay=1&mute=1&playsinline=1&controls=1&rel=0" title="${esc(item.title)} – offizieller Trailer" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`
       : `<div class="player-fallback">${icon('play')}<p>Für diesen Titel führt dich die Trailer-Suche zu YouTube. Vollständige Folgen und Filme findest du beim jeweiligen Streaming-Anbieter.</p><a class="button button-primary" href="${esc(searchUrl)}" target="_blank" rel="noopener noreferrer">Trailer auf YouTube finden ${icon('external')}</a></div>`;
     $('#trailerDialog').showModal();
     clearInterval(state.heroTimer);

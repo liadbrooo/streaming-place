@@ -10,6 +10,7 @@
   let hoverTimer = null;
   let leaveTimer = null;
   let apiPromise = null;
+  let frameNumber = 0;
 
   function ensureYouTube() {
     if (window.YT?.Player) return Promise.resolve(window.YT);
@@ -32,7 +33,7 @@
       script.src = 'https://www.youtube.com/iframe_api';
       script.addEventListener('error', finish, {once:true});
       document.head.append(script);
-      setTimeout(finish, 4500);
+      setTimeout(finish, 10000);
     });
     return apiPromise;
   }
@@ -46,6 +47,9 @@
       try { ctx.video.pause(); ctx.video.removeAttribute('src'); ctx.video.load(); } catch (_) {}
       ctx.video = null;
     }
+    clearTimeout(ctx.blockedTimer);
+    clearTimeout(ctx.checkTimer);
+    ctx.iframe = null;
     ctx.slot?.replaceChildren();
     ctx.started = false;
     ctx.layer.classList.remove('sp-auto-playing');
@@ -67,54 +71,56 @@
       autoplay: '1', mute: '1', playsinline: '1',
       controls: controls ? '1' : '0', rel: '0',
       loop: '1', playlist: item.trailer,
-      enablejsapi: '1', origin: location.origin
+      enablejsapi: '1', origin: location.origin, fs: '0'
     });
-    return 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(item.trailer) + '?' + params;
+    return 'https://www.youtube.com/embed/' + encodeURIComponent(item.trailer) + '?' + params;
   }
 
-  function fallbackEmbed(ctx) {
-    if (active !== ctx) return;
-    ctx.slot.replaceChildren();
-    const iframe = document.createElement('iframe');
-    iframe.className = 'sp-auto-iframe';
-    iframe.title = ctx.item.title + ' – Trailer-Vorschau';
-    iframe.src = sourceUrl(ctx.item);
-    iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
-    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-    iframe.setAttribute('allowfullscreen', '');
-    iframe.addEventListener('load', () => {
-      if (active !== ctx) return;
-      ctx.layer.classList.add('sp-auto-playing');
-      // Repeat the muted play command for players that initialize after iframe load.
-      const command = action => {
-        try { iframe.contentWindow?.postMessage(JSON.stringify({event:'command',func:action,args:[]}), '*'); } catch (_) {}
-      };
-      command('mute');
-      command('playVideo');
-    });
-    ctx.slot.append(iframe);
+  function showUnavailable(ctx, reason) {
+    if (active !== ctx || ctx.layer.classList.contains('sp-auto-playing')) return;
+    ctx.observer?.disconnect();
+    removeMedia(ctx);
+    ctx.started = true; // Prevent IntersectionObserver from retrying infinitely.
+    const panel = document.createElement('div');
+    panel.className = 'sp-auto-recovery';
+    const heading = document.createElement('strong');
+    heading.textContent = reason === 'restricted'
+      ? 'Automatisches Abspielen eingeschränkt'
+      : 'Trailer kann hier nicht automatisch starten';
+    const message = document.createElement('p');
+    message.textContent = reason === 'restricted'
+      ? 'Dein Browser oder die Video-Einstellungen verhindern die Vorschau.'
+      : 'Dieser YouTube-Trailer lässt sich auf deinem Gerät nicht automatisch einbetten.';
+    const link = document.createElement('a');
+    link.className = 'sp-auto-recovery-link';
+    link.href = 'https://www.youtube.com/watch?v=' + encodeURIComponent(ctx.item.trailer);
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = 'Offiziellen Trailer öffnen';
+    panel.append(heading, message, link);
+    ctx.slot.append(panel);
+    ctx.layer.dataset.autoplay = reason;
   }
 
   function startYoutube(ctx) {
     if (active !== ctx || ctx.started || document.hidden) return;
     ctx.started = true;
-    const item = ctx.item;
+    const iframe = document.createElement('iframe');
+    iframe.className = 'sp-auto-iframe';
+    iframe.id = 'sp-preview-player-' + (++frameNumber);
+    iframe.title = ctx.item.title + ' – Trailer-Vorschau';
+    iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen');
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+    iframe.src = sourceUrl(ctx.item);
+    ctx.iframe = iframe;
+    // The iframe requests muted autoplay immediately, without waiting for the API.
+    ctx.slot.append(iframe);
+
     ensureYouTube().then(api => {
-      if (active !== ctx || !ctx.started) return;
-      if (!api) { fallbackEmbed(ctx); return; }
-      const mount = document.createElement('div');
-      mount.className = 'sp-auto-mount';
-      ctx.slot.replaceChildren(mount);
+      if (active !== ctx || ctx.iframe !== iframe || !api) return;
       try {
-        ctx.player = new api.Player(mount, {
-          host: 'https://www.youtube-nocookie.com',
-          videoId: item.trailer,
-          width: '100%', height: '100%',
-          playerVars: {
-            autoplay: 1, mute: 1, controls: 0, playsinline: 1,
-            loop: 1, playlist: item.trailer, rel: 0,
-            fs: 0, origin: location.origin
-          },
+        ctx.player = new api.Player(iframe, {
           events: {
             onReady: event => {
               if (active !== ctx) return;
@@ -122,27 +128,48 @@
               if (frame) {
                 frame.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
                 frame.referrerPolicy = 'strict-origin-when-cross-origin';
-                frame.title = item.title + ' – Trailer-Vorschau';
+                frame.title = ctx.item.title + ' – Trailer-Vorschau';
               }
               try { event.target.mute(); event.target.playVideo(); } catch (_) {}
+              ctx.checkTimer = setTimeout(() => {
+                if (active !== ctx || ctx.layer.classList.contains('sp-auto-playing')) return;
+                try {
+                  if (ctx.player?.getPlayerState?.() === 1) {
+                    ctx.layer.classList.add('sp-auto-playing');
+                    return;
+                  }
+                } catch (_) {}
+                showUnavailable(ctx, 'restricted');
+              }, 11500);
             },
             onStateChange: event => {
               if (active !== ctx) return;
-              if (event.data === 1) ctx.layer.classList.add('sp-auto-playing');
+              if (event.data === 1) {
+                clearTimeout(ctx.blockedTimer);
+                clearTimeout(ctx.checkTimer);
+                ctx.layer.classList.add('sp-auto-playing');
+              }
             },
             onAutoplayBlocked: () => {
-              if (active === ctx) ctx.layer.dataset.autoplay = 'blocked';
-            },
-            onError: () => {
               if (active !== ctx) return;
-              // Preserve a poster instead of a broken embedded player.
-              ctx.layer.dataset.autoplay = 'unavailable';
-              removeMedia(ctx);
+              // First retry muted playback; only show fallback if it still cannot play.
+              try { ctx.player?.mute(); ctx.player?.playVideo(); } catch (_) {}
+              clearTimeout(ctx.blockedTimer);
+              ctx.blockedTimer = setTimeout(() => {
+                if (active === ctx && !ctx.layer.classList.contains('sp-auto-playing')) {
+                  showUnavailable(ctx, 'restricted');
+                }
+              }, 2200);
+            },
+            onError: event => {
+              if (active !== ctx) return;
+              // Codes 101/150: embedding disabled; 153: player identity/referrer rejected.
+              showUnavailable(ctx, 'embed');
             }
           }
         });
       } catch (_) {
-        fallbackEmbed(ctx);
+        // The direct iframe is already present and may autoplay without the API.
       }
     });
   }
@@ -170,7 +197,10 @@
 
   function start(ctx) {
     if (!ctx.item?.trailer && !ctx.item?.previewVideo) return;
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches || navigator.connection?.saveData) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches || navigator.connection?.saveData) {
+      if (ctx.item.trailer) showUnavailable(ctx, 'restricted');
+      return;
+    }
     if (ctx.item.trailer) startYoutube(ctx);
     else startNative(ctx);
   }
