@@ -6,10 +6,12 @@
   'use strict';
   let active = null;
   let hoverTimer = null;
+  let leaveTimer = null;
 
   const find = id => (window.CATALOG || []).find(item => item.id === id);
   const stop = () => {
     clearTimeout(hoverTimer);
+    clearTimeout(leaveTimer);
     if (!active) return;
     const { layer, video } = active;
     if (video) {
@@ -122,29 +124,91 @@
     }
   }
 
+  function restoreHero() {
+    if (document.querySelector('dialog[open]')) return;
+    const index = Math.max(0, Number(document.querySelector('#heroCurrent')?.textContent || 1) - 1);
+    const item = find((window.HERO_IDS || [])[index]);
+    if (item) hero(item);
+  }
+
+  function closeHoverWhenOutside() {
+    clearTimeout(leaveTimer);
+    leaveTimer = setTimeout(() => {
+      if (active?.mode !== 'card') return;
+      const popup = active.layer;
+      if (popup.matches(':hover') || active.anchor?.matches(':hover')) return;
+      stop();
+      restoreHero();
+    }, 250);
+  }
+
+  function showHover(item, card) {
+    if (!item?.trailer || !card || document.querySelector('dialog[open]')) return;
+    stop();
+    const host = document.createElement('div');
+    host.className = 'sp-trailer-flyout';
+    const media = document.createElement('div');
+    media.className = 'sp-flyout-media';
+    media.append(youtube(item));
+    const footer = document.createElement('div');
+    footer.className = 'sp-flyout-footer';
+    const labels = document.createElement('div');
+    labels.className = 'sp-flyout-text';
+    const title = document.createElement('strong');
+    title.textContent = item.title;
+    const provider = document.createElement('span');
+    provider.textContent = item.provider + ' · offizieller Trailer';
+    labels.append(title, provider);
+    const info = document.createElement('button');
+    info.type = 'button';
+    info.className = 'sp-flyout-info';
+    info.dataset.open = item.id;
+    info.textContent = 'Infos';
+    const watch = document.createElement('button');
+    watch.type = 'button';
+    watch.className = 'sp-flyout-watch';
+    watch.dataset.trailer = item.id;
+    watch.textContent = 'Trailer';
+    footer.append(labels, info, watch);
+    host.append(media, footer);
+    document.body.append(host);
+    const rect = card.getBoundingClientRect();
+    const width = Math.min(374, window.innerWidth - 24);
+    const height = width * (9 / 16) + 70;
+    const left = Math.max(12, Math.min(window.innerWidth - width - 12, rect.left + rect.width / 2 - width / 2));
+    const top = Math.max(80, Math.min(window.innerHeight - height - 12, rect.top - 36));
+    host.style.cssText = 'width:' + width + 'px;left:' + left + 'px;top:' + top + 'px;';
+    active = { layer: host, video: null, mode: 'card', item, anchor: card };
+    host.addEventListener('pointerenter', () => clearTimeout(leaveTimer));
+    host.addEventListener('pointerleave', closeHoverWhenOutside);
+  }
+
   document.addEventListener('pointerover', event => {
-    if (event.pointerType === 'touch') return;
+    if (event.pointerType === 'touch' || window.innerWidth < 820 || window.innerHeight < 360) return;
     const card = event.target.closest('.poster-card[data-open]');
     if (!card || card.contains(event.relatedTarget)) return;
     clearTimeout(hoverTimer);
+    clearTimeout(leaveTimer);
     hoverTimer = setTimeout(() => {
       if (!card.isConnected || !card.matches(':hover') || document.querySelector('dialog[open]')) return;
       const item = find(card.dataset.open);
-      if (item) preview(item, card.querySelector('.poster-art'), 'card');
-    }, 450);
+      if (item) showHover(item, card);
+    }, 550);
   });
+
   document.addEventListener('pointerout', event => {
     const card = event.target.closest('.poster-card[data-open]');
     if (!card || card.contains(event.relatedTarget)) return;
     clearTimeout(hoverTimer);
-    if (active?.mode !== 'card') return;
-    stop();
-    if (!document.querySelector('dialog[open]')) {
-      const index = Math.max(0, Number(document.querySelector('#heroCurrent')?.textContent || 1) - 1);
-      const item = find((window.HERO_IDS || [])[index]);
-      if (item) hero(item);
-    }
+    if (active?.mode === 'card') closeHoverWhenOutside();
   });
+
+  window.addEventListener('scroll', () => {
+    if (active?.mode === 'card') {
+      stop();
+      restoreHero();
+    }
+  }, { passive: true });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) stop();
   });
